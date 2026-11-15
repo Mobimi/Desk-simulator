@@ -1,0 +1,54 @@
+{
+  "allowed_targets": [
+    "x86_64-softmmu",
+    "aarch64-softmmu"
+  ],
+  "forbidden_targets": [
+    "mips",
+    "ppc",
+    "sparc",
+    "riscv",
+    "s390x",
+    "i386",
+    "arm",
+    "mips-softmmu",
+    "mipsel-softmmu",
+    "mips64-softmmu",
+    "mips64el-softmmu",
+    "ppc-softmmu",
+    "ppc64-softmmu",
+    "sparc-softmmu",
+    "sparc64-softmmu",
+    "riscv32-softmmu",
+    "riscv64-softmmu",
+    "s390x-softmmu",
+    "arm-softmmu",
+    "i386-softmmu",
+    "m68k-softmmu",
+    "sh4-softmmu"
+  ],
+  "compiler_required_flags": [
+    "-O3",
+    "-flto"
+  ],
+  "apple_silicon_targets": [
+    "-mcpu=apple-m1",
+    "-mcpu=apple-a15",
+    "-arch arm64"
+  ],
+  "tcg_buffer_clamp": {
+    "min_mb": 128,
+    "max_mb": 256,
+    "default_mb": 128
+  },
+  "spice_ipc": {
+    "transport": "unix",
+    "disable_ticketing": true,
+    "image_compression": "off",
+    "streaming_video": "off",
+    "pruned_channels": [
+      "smartcard",
+      "webdav"
+    ]
+  }
+}
