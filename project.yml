@@ -1,0 +1,77 @@
+name: DeskSimulator
+
+options:
+  bundleIdPrefix: com.mobimi
+  deploymentTarget:
+    iOS: "15.0"
+  xcodeVersion: "15.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+configs:
+  Debug-TrollStore: debug
+  Release-TrollStore: release
+  Debug-Sideload: debug
+  Release-Sideload: release
+
+targets:
+  DeskSimulator:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: Engine
+      - path: Management
+      - path: UI
+      - path: Config
+        buildPhase: none
+    settings:
+      base:
+        PRODUCT_NAME: DeskSimulator
+        PRODUCT_BUNDLE_IDENTIFIER: com.mobimi.DeskSimulator
+        INFOPLIST_FILE: Config/Info.plist
+        SWIFT_OBJC_BRIDGING_HEADER: Engine/DeskSimulator-Bridging-Header.h
+        HEADER_SEARCH_PATHS:
+          - "$(SRCROOT)/Engine"
+          - "$(SRCROOT)/Engine/QEMU"
+        SWIFT_VERSION: "5.9"
+        IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ENABLE_BITCODE: "NO"
+        ARCHS: "arm64"
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGNING_ALLOWED: "NO"
+        CODE_SIGNING_REQUIRED: "NO"
+      configs:
+        Debug-TrollStore:
+          CODE_SIGN_ENTITLEMENTS: Config/DeskSimulator-TrollStore.entitlements
+        Release-TrollStore:
+          CODE_SIGN_ENTITLEMENTS: Config/DeskSimulator-TrollStore.entitlements
+        Debug-Sideload:
+          CODE_SIGN_ENTITLEMENTS: Config/DeskSimulator-Sideload.entitlements
+        Release-Sideload:
+          CODE_SIGN_ENTITLEMENTS: Config/DeskSimulator-Sideload.entitlements
+    dependencies:
+      - sdk: Metal.framework
+      - sdk: MetalKit.framework
+      - sdk: GameController.framework
+      - sdk: AudioToolbox.framework
+
+schemes:
+  DeskSimulator-TrollStore:
+    build:
+      targets:
+        DeskSimulator: all
+    run:
+      config: Release-TrollStore
+    archive:
+      config: Release-TrollStore
+
+  DeskSimulator-Sideload:
+    build:
+      targets:
+        DeskSimulator: all
+    run:
+      config: Release-Sideload
+    archive:
+      config: Release-Sideload

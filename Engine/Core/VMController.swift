@@ -133,11 +133,31 @@ public final class VMController: NSObject {
             self.updateState(.stopping)
 
             self.spiceConnection?.disconnect()
-            self.qmpClient?.shutdown(force: force) { [weak self] _ in
-                guard let self = self else { return }
+            if let qmp = self.qmpClient, qmp.isConnected {
+                qmp.shutdown(force: force) { [weak self] _ in
+                    guard let self = self else { return }
+                    self.qmpClient?.disconnect()
+                    self.launcher.terminate()
+                    self.updateState(.stopped)
+                }
+            } else {
                 self.qmpClient?.disconnect()
                 self.launcher.terminate()
                 self.updateState(.stopped)
+            }
+        }
+    }
+
+    /// Dispatches a VirtIO-Balloon memory target or emergency QMP command from Smart Memory Guard.
+    public func dispatchMemoryCommand(_ command: QMPCommand) {
+        controllerQueue.async { [weak self] in
+            guard let self = self else { return }
+            if command.execute == "stop" {
+                self.pause()
+            } else if command.execute == "cont" {
+                self.resume()
+            } else if command.execute == "balloon", let targetBytes = command.arguments["value"], targetBytes > 0 {
+                self.qmpClient?.setBalloonMemory(targetBytes: UInt64(targetBytes)) { _ in }
             }
         }
     }

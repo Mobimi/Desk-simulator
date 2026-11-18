@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Sideload build (SideStore/AltStore free Apple ID):
+	     increased-memory-limit and extended-virtual-addressing are intentionally omitted
+	     here so free signing certificates succeed cleanly. Smart Memory Guard detects
+	     this automatically at runtime and gracefully scales RAM limits to prevent Jetsam kills. -->
+	<key>get-task-allow</key>
+	<true/>
+</dict>
+</plist>

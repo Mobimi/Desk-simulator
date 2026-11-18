@@ -67,4 +67,7 @@ public protocol PCoreSchedulerProtocol {
 
     /// Transitions the Dynamic Boot Boost state machine (`BOOTING` -> `RUNNING`).
     func updateBootBoostState(isBooting: Bool)
+
+    /// Transitions to an arbitrary state in the Dynamic Boot Boost state machine.
+    func transitionState(to newState: BootBoostState)
 }

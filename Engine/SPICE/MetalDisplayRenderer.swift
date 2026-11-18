@@ -47,6 +47,43 @@ public final class MetalDisplayRenderer: MetalDisplayRendererProtocol {
     private var device: MTLDevice?
     private var commandQueue: MTLCommandQueue?
     private var currentTexture: MTLTexture?
+
+    /// Thread-safe read access to the latest uploaded framebuffer texture for MTKView blitting.
+    public var latestTexture: MTLTexture? {
+        return currentTexture
+    }
+
+    /// Blits the latest SPICE framebuffer texture onto a CAMetalDrawable at 60/120Hz ProMotion.
+    public func render(to drawable: CAMetalDrawable) {
+        guard isReadyForRendering,
+              let commandQueue = self.commandQueue,
+              let srcTexture = self.currentTexture,
+              let commandBuffer = commandQueue.makeCommandBuffer(),
+              let blitEncoder = commandBuffer.makeBlitCommandEncoder() else {
+            return
+        }
+
+        let dstTexture = drawable.texture
+        let copyWidth = min(srcTexture.width, dstTexture.width)
+        let copyHeight = min(srcTexture.height, dstTexture.height)
+
+        if copyWidth > 0 && copyHeight > 0 {
+            blitEncoder.copy(
+                from: srcTexture,
+                sourceSlice: 0,
+                sourceLevel: 0,
+                sourceOrigin: MTLOrigin(x: 0, y: 0, z: 0),
+                sourceSize: MTLSize(width: copyWidth, height: copyHeight, depth: 1),
+                to: dstTexture,
+                destinationSlice: 0,
+                destinationLevel: 0,
+                destinationOrigin: MTLOrigin(x: 0, y: 0, z: 0)
+            )
+        }
+        blitEncoder.endEncoding()
+        commandBuffer.present(drawable)
+        commandBuffer.commit()
+    }
     #endif
 
     public init(initialViewport: DisplayViewport = DisplayViewport()) {

@@ -1,0 +1,106 @@
+name: Build DeskSimulator IPA
+
+on:
+  push:
+    branches:
+      - main
+      - "release/**"
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ipa:
+    name: Build & Package IPAs (TrollStore & Sideload)
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Select Xcode
+        run: |
+          if [ -d "/Applications/Xcode_15.4.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_15.4.app
+          elif [ -d "/Applications/Xcode_15.2.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_15.2.app
+          elif [ -d "/Applications/Xcode_16.0.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.0.app
+          fi
+          xcodebuild -version
+
+      - name: Install XcodeGen
+        run: |
+          brew install xcodegen
+          xcodegen --version
+
+      - name: Generate Xcode Project
+        run: |
+          xcodegen generate --spec project.yml
+
+      - name: Build TrollStore Archive
+        run: |
+          xcodebuild archive \
+            -project DeskSimulator.xcodeproj \
+            -scheme DeskSimulator-TrollStore \
+            -configuration Release-TrollStore \
+            -archivePath build/TrollStore.xcarchive \
+            -destination "generic/platform=iOS" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package TrollStore IPA
+        run: |
+          mkdir -p build/ipa-trollstore/Payload
+          cp -R build/TrollStore.xcarchive/Products/Applications/DeskSimulator.app build/ipa-trollstore/Payload/
+          cd build/ipa-trollstore
+          zip -qr ../../DeskSimulator-TrollStore.ipa Payload
+          cd ../..
+          ls -lh DeskSimulator-TrollStore.ipa
+
+      - name: Build Sideload Archive
+        run: |
+          xcodebuild archive \
+            -project DeskSimulator.xcodeproj \
+            -scheme DeskSimulator-Sideload \
+            -configuration Release-Sideload \
+            -archivePath build/Sideload.xcarchive \
+            -destination "generic/platform=iOS" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package Sideload IPA
+        run: |
+          mkdir -p build/ipa-sideload/Payload
+          cp -R build/Sideload.xcarchive/Products/Applications/DeskSimulator.app build/ipa-sideload/Payload/
+          cd build/ipa-sideload
+          zip -qr ../../DeskSimulator-Sideload.ipa Payload
+          cd ../..
+          ls -lh DeskSimulator-Sideload.ipa
+
+      - name: Upload TrollStore IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeskSimulator-TrollStore-ipa
+          path: DeskSimulator-TrollStore.ipa
+          retention-days: 14
+
+      - name: Upload Sideload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeskSimulator-Sideload-ipa
+          path: DeskSimulator-Sideload.ipa
+          retention-days: 14

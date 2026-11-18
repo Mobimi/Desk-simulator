@@ -86,14 +86,7 @@ public final class JITDetector {
 
     private static func checkKernelDebugFlag() -> Bool {
         #if canImport(Darwin)
-        var info = kinfo_proc()
-        var size = MemoryLayout<kinfo_proc>.stride
-        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()]
-        let result = sysctl(&mib, u_int(mib.count), &info, &size, nil, 0)
-        if result == 0 {
-            return (info.kp_proc.p_flag & P_TRACED) != 0
-        }
-        return false
+        return desk_is_jit_enabled()
         #else
         return false
         #endif
