@@ -59,6 +59,7 @@ jobs:
 
       - name: Build TrollStore Archive
         run: |
+          set -o pipefail
           xcodebuild archive \
             -project DeskSimulator.xcodeproj \
             -scheme DeskSimulator-TrollStore \
@@ -67,7 +68,15 @@ jobs:
             -destination "generic/platform=iOS" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY=""
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" 2>&1 | tee build_trollstore.log || {
+              echo "::error::TrollStore Archive Failed"
+              grep -E -i "(error:|warning:.*failed|The following build commands failed:)" build_trollstore.log | head -n 30 | while IFS= read -r line; do
+                echo "::error::$line"
+              done
+              cat build_trollstore.log >> $GITHUB_STEP_SUMMARY
+              exit 1
+            }
 
       - name: Package TrollStore IPA
         run: |
@@ -80,6 +89,7 @@ jobs:
 
       - name: Build Sideload Archive
         run: |
+          set -o pipefail
           xcodebuild archive \
             -project DeskSimulator.xcodeproj \
             -scheme DeskSimulator-Sideload \
@@ -88,7 +98,15 @@ jobs:
             -destination "generic/platform=iOS" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY=""
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" 2>&1 | tee build_sideload.log || {
+              echo "::error::Sideload Archive Failed"
+              grep -E -i "(error:|warning:.*failed|The following build commands failed:)" build_sideload.log | head -n 30 | while IFS= read -r line; do
+                echo "::error::$line"
+              done
+              cat build_sideload.log >> $GITHUB_STEP_SUMMARY
+              exit 1
+            }
 
       - name: Package Sideload IPA
         run: |
