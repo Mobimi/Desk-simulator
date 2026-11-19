@@ -21,7 +21,13 @@ targets:
     deploymentTarget: "15.0"
     sources:
       - path: Engine
+        excludes:
+          - "**/*.py"
+          - "**/__pycache__"
       - path: Management
+        excludes:
+          - "**/*.py"
+          - "**/__pycache__"
       - path: UI
       - path: Config
         buildPhase: none

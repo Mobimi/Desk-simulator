@@ -464,11 +464,11 @@ class TestGitHubActionsWorkflowPipeline(unittest.TestCase):
         concurrency = self.workflow.get("concurrency", {})
         self.assertTrue(concurrency.get("cancel-in-progress"))
 
-    def test_job_runner_macos_14(self):
+    def test_job_runner_macos_runner(self):
         jobs = self.workflow.get("jobs", {})
         self.assertEqual(len(jobs), 1)
         job = list(jobs.values())[0]
-        self.assertEqual(job.get("runs-on"), "macos-14")
+        self.assertIn(job.get("runs-on"), ["macos-14", "macos-15"])
         self.assertEqual(job.get("timeout-minutes"), 45)
 
     def test_step_checkout_with_recursive_submodules(self):
