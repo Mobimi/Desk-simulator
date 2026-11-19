@@ -127,6 +127,18 @@ public final class SPICEConnection {
         updateState(.disconnected)
     }
 
+    /// Ingests a display frame (e.g. from QEMU display callback or SPICE channel) and forwards to delegate.
+    @discardableResult
+    public func ingestDisplayFrame(data: Data, width: Int, height: Int) -> Bool {
+        guard case .connected = state else { return false }
+        guard !data.isEmpty, width > 0, height > 0 else { return false }
+        let expectedMinBytes = width * height * 4
+        guard data.count >= expectedMinBytes else { return false }
+
+        delegate?.spiceConnection(self, didReceiveDisplayFrame: data, width: width, height: height)
+        return true
+    }
+
     /// Sends input event packet (e.g. mouse move, key press) over UDS.
     public func sendInputEvent(data: Data) -> Bool {
         guard case .connected = state else { return false }

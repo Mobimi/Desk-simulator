@@ -41,6 +41,7 @@ public final class MetalDisplayRenderer: MetalDisplayRendererProtocol {
     public private(set) var currentFrameCount: UInt64 = 0
 
     private var currentFramebufferData: Data?
+    private var currentFramebufferStride: Int = 0
     private let renderQueue = DispatchQueue(label: "com.mobimi.desk.spice.renderer", qos: .userInteractive)
 
     #if canImport(Metal)
@@ -106,6 +107,7 @@ public final class MetalDisplayRenderer: MetalDisplayRendererProtocol {
         renderQueue.async { [weak self] in
             guard let self = self else { return }
             self.currentFramebufferData = data
+            self.currentFramebufferStride = stride > 0 ? stride : (width * 4)
             self.viewport.width = width
             self.viewport.height = height
             self.drawFrame()
@@ -121,6 +123,8 @@ public final class MetalDisplayRenderer: MetalDisplayRendererProtocol {
     /// Executes render pass for the latest display framebuffer.
     public func drawFrame() {
         guard isReadyForRendering, let data = currentFramebufferData else { return }
+        let bytesPerRow = currentFramebufferStride > 0 ? currentFramebufferStride : (viewport.width * 4)
+        guard viewport.width > 0, viewport.height > 0, data.count >= bytesPerRow * viewport.height else { return }
 
         #if canImport(Metal)
         guard let device = self.device, let commandQueue = self.commandQueue else { return }
@@ -134,10 +138,9 @@ public final class MetalDisplayRenderer: MetalDisplayRendererProtocol {
             currentTexture = device.makeTexture(descriptor: descriptor)
         }
         if let texture = currentTexture {
-            let bytesPerRow = viewport.width * 4
             let region = MTLRegionMake2D(0, 0, viewport.width, viewport.height)
             data.withUnsafeBytes { raw in
-                if let base = raw.baseAddress, data.count >= bytesPerRow * viewport.height {
+                if let base = raw.baseAddress {
                     texture.replace(region: region, mipmapLevel: 0, withBytes: base, bytesPerRow: bytesPerRow)
                 }
             }

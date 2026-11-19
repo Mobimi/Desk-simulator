@@ -111,6 +111,10 @@ public final class VMSessionViewModel: ObservableObject {
         controller.delegate = self
         self.vmController = controller
 
+        if let spice = controller.spiceConnection {
+            spice.delegate = self
+        }
+
         // Start live Smart Memory Guard monitoring + Darwin Memory Pressure hook
         memoryMonitor.startMonitoring(autoPauseOnDanger: profile.autoPauseOnJetsamDanger) { [weak controller] command in
             controller?.dispatchMemoryCommand(command)

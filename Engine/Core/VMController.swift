@@ -36,11 +36,37 @@ public final class VMController: NSObject {
     public init(configuration: QEMUConfiguration) {
         self.configuration = configuration
         self.launcher = ProcessLauncher()
+        self.spiceConnection = try? SPICEConnection(
+            socketPath: configuration.spiceSocketPath,
+            channelPolicy: .optimizedForIOS
+        )
+        if let qmpSocket = configuration.qmpSocketPath {
+            self.qmpClient = try? QMPClient(socketPath: qmpSocket)
+        }
         super.init()
+        self.launcher.delegate = self
     }
 
     /// Boots the Virtual Machine by assembling CLI arguments and starting the engine thread.
     public func start() {
+        // Guarantee SPICE connection is synchronously initialized and non-nil before start() returns
+        do {
+            let existingSpiceDelegate = self.spiceConnection?.delegate
+            self.spiceConnection = try SPICEConnection(
+                socketPath: self.configuration.spiceSocketPath,
+                channelPolicy: .optimizedForIOS
+            )
+            self.spiceConnection?.delegate = existingSpiceDelegate
+
+            if let qmpSocket = self.configuration.qmpSocketPath {
+                self.qmpClient = try QMPClient(socketPath: qmpSocket)
+            }
+        } catch {
+            self.updateState(.error(error.localizedDescription))
+            self.delegate?.vmController(self, didReceiveError: error)
+            return
+        }
+
         controllerQueue.async { [weak self] in
             guard let self = self else { return }
             switch self.state {
@@ -55,23 +81,15 @@ public final class VMController: NSObject {
             do {
                 let args = try QEMUArgumentsBuilder.buildArguments(from: self.configuration)
 
-                // Initialize SPICE connection
-                self.spiceConnection = try SPICEConnection(
-                    socketPath: self.configuration.spiceSocketPath,
-                    channelPolicy: .optimizedForIOS
-                )
-
-                // Initialize QMP client if socket configured
-                if let qmpSocket = self.configuration.qmpSocketPath {
-                    self.qmpClient = try QMPClient(socketPath: qmpSocket)
-                }
-
                 // Launch QEMU engine thread
                 self.launcher.launch(with: args)
                 self.updateState(.running)
 
                 // Connect SPICE client
                 self.spiceConnection?.connect()
+
+                // Connect QMP monitor client
+                self.qmpClient?.connect { _ in }
 
             } catch {
                 self.updateState(.error(error.localizedDescription))
@@ -148,6 +166,25 @@ public final class VMController: NSObject {
         }
     }
 
+    /// Adjusts guest RAM balloon target in megabytes via QMP VirtIO ballooning.
+    public func setMemoryBalloon(mb: Int, completion: ((Result<Void, QMPError>) -> Void)? = nil) {
+        guard mb > 0 else {
+            completion?(.failure(.commandFailed("Invalid balloon target: \(mb)MB")))
+            return
+        }
+        let bytes = UInt64(mb) * 1024 * 1024
+        controllerQueue.async { [weak self] in
+            guard let self = self else { return }
+            if let qmp = self.qmpClient {
+                qmp.setBalloonMemory(targetBytes: bytes) { result in
+                    completion?(result)
+                }
+            } else {
+                completion?(.failure(.notConnected))
+            }
+        }
+    }
+
     /// Dispatches a VirtIO-Balloon memory target or emergency QMP command from Smart Memory Guard.
     public func dispatchMemoryCommand(_ command: QMPCommand) {
         controllerQueue.async { [weak self] in
@@ -168,5 +205,27 @@ public final class VMController: NSObject {
             guard let self = self else { return }
             self.delegate?.vmController(self, didChangeState: newState)
         }
+    }
+}
+
+extension VMController: ProcessLauncherDelegate {
+    public func launcher(_ launcher: ProcessLauncher, didChangeState state: LaunchState) {
+        controllerQueue.async { [weak self] in
+            guard let self = self else { return }
+            switch state {
+            case .failed(let error):
+                self.updateState(.error("Launcher failed: \(error)"))
+            case .terminated:
+                if self.state == .stopping || self.state == .running {
+                    self.updateState(.stopped)
+                }
+            default:
+                break
+            }
+        }
+    }
+
+    public func launcher(_ launcher: ProcessLauncher, didLogMessage message: String) {
+        // Telemetry & diagnostics logging hook
     }
 }

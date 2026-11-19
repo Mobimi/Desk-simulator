@@ -32,8 +32,22 @@ targets:
         INFOPLIST_FILE: Config/Info.plist
         SWIFT_OBJC_BRIDGING_HEADER: Engine/DeskSimulator-Bridging-Header.h
         HEADER_SEARCH_PATHS:
+          - "$(inherited)"
           - "$(SRCROOT)/Engine"
           - "$(SRCROOT)/Engine/QEMU"
+          - "$(SRCROOT)/Engine/SPICE"
+          - "$(SRCROOT)/Engine/Core"
+        LIBRARY_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(SRCROOT)/Engine/QEMU/lib"
+          - "$(SRCROOT)/Engine/SPICE/lib"
+        FRAMEWORK_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(SRCROOT)/Frameworks"
+        OTHER_LDFLAGS:
+          - "$(inherited)"
+          - "-ObjC"
+          - "-Wl,-undefined,dynamic_lookup"
         SWIFT_VERSION: "5.9"
         IPHONEOS_DEPLOYMENT_TARGET: "15.0"
         TARGETED_DEVICE_FAMILY: "1,2"

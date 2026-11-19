@@ -60,6 +60,7 @@ public final class ProcessLauncher {
             }
             thread.qualityOfService = .userInteractive
             thread.name = "com.mobimi.desk.qemu.main"
+            thread.stackSize = 4 * 1024 * 1024
             self.executionThread = thread
             thread.start()
         }
