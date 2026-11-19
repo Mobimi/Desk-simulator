@@ -28,7 +28,7 @@ public struct JITGuideSheetView: View {
     }
 
     public var body: some View {
-        NavigationStack {
+        NavigationView {
             List {
                 Section("Trạng thái hiện tại") {
                     HStack {
@@ -92,6 +92,7 @@ public struct JITGuideSheetView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     private func entitlementRow(key: String, active: Bool, detail: String) -> some View {

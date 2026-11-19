@@ -16,7 +16,7 @@ public struct HomeView: View {
     }
 
     public var body: some View {
-        NavigationStack {
+        NavigationView {
             ZStack(alignment: .bottom) {
                 ScrollView {
                     VStack(spacing: 20) {
@@ -102,6 +102,7 @@ public struct HomeView: View {
                 )
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     // MARK: - Live System Health Card (JIT + Entitlements + Smart Memory Guard)

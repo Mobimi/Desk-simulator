@@ -31,7 +31,7 @@ public struct VMSettingsView: View {
     }
 
     public var body: some View {
-        NavigationStack {
+        NavigationView {
             Form {
                 Section("Thông tin chung") {
                     TextField("Tên máy ảo", text: $draft.name)
@@ -169,10 +169,11 @@ public struct VMSettingsView: View {
                         onSave(draft)
                         dismiss()
                     }
-                    .fontWeight(.bold)
+                    .font(.headline)
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     private func colorForZone(_ zone: JetsamDangerZone) -> Color {

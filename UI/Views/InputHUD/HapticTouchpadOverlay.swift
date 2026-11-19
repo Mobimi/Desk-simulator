@@ -269,7 +269,7 @@ public struct HapticTouchpadOverlay: View {
 
     // MARK: - Haptic Feedback Helper
 
-    private func triggerHaptic(style: UIImpactFeedbackStyle) {
+    private func triggerHaptic(style: UIImpactFeedbackGenerator.FeedbackStyle) {
         #if canImport(UIKit)
         let generator = UIImpactFeedbackGenerator(style: style)
         generator.prepare()

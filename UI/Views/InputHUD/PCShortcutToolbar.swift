@@ -329,7 +329,7 @@ public struct PCShortcutToolbar: View {
         }
     }
 
-    private func triggerHaptic(style: UIImpactFeedbackStyle = .light) {
+    private func triggerHaptic(style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
         #if canImport(UIKit)
         let generator = UIImpactFeedbackGenerator(style: style)
         generator.prepare()

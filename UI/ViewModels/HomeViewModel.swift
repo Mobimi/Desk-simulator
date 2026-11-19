@@ -26,20 +26,23 @@ public final class HomeViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     public init(
-        store: VMStore = VMStore(),
-        memoryMonitor: RuntimeMemoryMonitor = RuntimeMemoryMonitor(),
-        pCoreScheduler: PCoreScheduler = PCoreScheduler()
+        store: VMStore? = nil,
+        memoryMonitor: RuntimeMemoryMonitor? = nil,
+        pCoreScheduler: PCoreScheduler? = nil
     ) {
-        self.store = store
-        self.memoryMonitor = memoryMonitor
-        self.pCoreScheduler = pCoreScheduler
+        let resolvedStore = store ?? VMStore()
+        let resolvedMonitor = memoryMonitor ?? RuntimeMemoryMonitor()
+        let resolvedScheduler = pCoreScheduler ?? PCoreScheduler()
+        self.store = resolvedStore
+        self.memoryMonitor = resolvedMonitor
+        self.pCoreScheduler = resolvedScheduler
         self.jitStatus = JITDetector.detectJIT()
 
-        store.objectWillChange
+        resolvedStore.objectWillChange
             .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &cancellables)
 
-        memoryMonitor.objectWillChange
+        resolvedMonitor.objectWillChange
             .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &cancellables)
     }

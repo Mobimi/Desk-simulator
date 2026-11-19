@@ -33,7 +33,7 @@ public struct SmartSetupWizardView: View {
     }
 
     public var body: some View {
-        NavigationStack {
+        NavigationView {
             VStack(spacing: 16) {
                 Picker("Chế độ tạo máy ảo", selection: $wizardVM.mode) {
                     ForEach(SetupWizardMode.allCases) { mode in
@@ -76,6 +76,7 @@ public struct SmartSetupWizardView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     // MARK: - Mode 1: 1-Click Template Catalog
